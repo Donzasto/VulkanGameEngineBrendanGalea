@@ -141,11 +141,13 @@
     <ClCompile Include="lve_window.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="lve_device.cpp" />
+    <ClCompile Include="lve_swap_chain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lve_pipeline.hpp" />
     <ClInclude Include="lve_window.hpp" />
     <ClInclude Include="lve_device.hpp" />
+    <ClInclude Include="lve_swap_chain.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="compile.bat" />
