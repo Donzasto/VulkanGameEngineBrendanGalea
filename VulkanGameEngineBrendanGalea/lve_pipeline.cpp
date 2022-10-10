@@ -11,7 +11,7 @@ namespace lve {
   LvePipeline::LvePipeline(LveDevice& device, const std::string& vertFilepath,
                          const std::string& fragFilepath,
                          const PipelineConfigInfo& configInfo)
-    : lveDevice(device) {
+    : lveDevice{device} {
     createGraphicsPipeline(vertFilepath, fragFilepath, configInfo);
   }
 
@@ -21,8 +21,13 @@ namespace lve {
     vkDestroyPipeline(lveDevice.device(), graphicsPipeline, nullptr);
   }
 
+  void LvePipeline::bind(VkCommandBuffer commandBuffer) {
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                      graphicsPipeline);
+  }
+
 std::vector<char> LvePipeline::readFile(const std::string& filepath) {
-  std::ifstream file(filepath, std::ios::ate | std::ios::binary);
+    std::ifstream file{filepath, std::ios::ate | std::ios::binary};
 
   if (!file.is_open()) {
     throw std::runtime_error("failed to open file: " + filepath);
@@ -43,10 +48,10 @@ void LvePipeline::createGraphicsPipeline(const std::string& vertFilepath,
                                          const PipelineConfigInfo& configInfo) {
 
   assert(configInfo.pipelineLayout != VK_NULL_HANDLE &&
-         "Cannot create graphics pipeline:: no pipelineLayout provided in "
+         "Cannot create graphics pipeline: no pipelineLayout provided in "
          "configInfo");
   assert(configInfo.renderPass != VK_NULL_HANDLE &&
-         "Cannot create graphics pipeline:: no renderPass provided in "
+         "Cannot create graphics pipeline: no renderPass provided in "
          "configInfo");
 
   auto vertCode = readFile(vertFilepath);
@@ -56,14 +61,14 @@ void LvePipeline::createGraphicsPipeline(const std::string& vertFilepath,
   createShaderModule(fragCode, &fragShaderModule);
 
   VkPipelineShaderStageCreateInfo shaderStages[2];
-  shaderStages[0].sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+  shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
   shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
   shaderStages[0].module = vertShaderModule;
   shaderStages[0].pName = "main";
   shaderStages[0].flags = 0;
   shaderStages[0].pNext = nullptr;
   shaderStages[0].pSpecializationInfo = nullptr;
-  shaderStages[1].sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+  shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
   shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
   shaderStages[1].module = fragShaderModule;
   shaderStages[1].pName = "main";
@@ -106,7 +111,13 @@ void LvePipeline::createGraphicsPipeline(const std::string& vertFilepath,
   pipelineInfo.basePipelineIndex = -1;
   pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-  if (vkCreateGraphicsPipelines(lveDevice.device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline)!= VK_SUCCESS){
+  if (vkCreateGraphicsPipelines(
+    lveDevice.device(),
+    VK_NULL_HANDLE,
+    1,
+    &pipelineInfo,
+    nullptr,
+    &graphicsPipeline)!= VK_SUCCESS){
     throw std::runtime_error("failed to create graphics pipeline");
   }
 
