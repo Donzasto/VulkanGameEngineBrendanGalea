@@ -1,33 +1,35 @@
 #include "lve_pipeline.hpp"
 
-//std
-#include <fstream>
-#include <stdexcept>
-#include <iostream>
+#include "lve_model.hpp"
+
+// std
 #include <cassert>
+#include <fstream>
+#include <iostream>
+#include <stdexcept>
 
 namespace lve {
 
-  LvePipeline::LvePipeline(LveDevice& device, const std::string& vertFilepath,
+LvePipeline::LvePipeline(LveDevice& device, const std::string& vertFilepath,
                          const std::string& fragFilepath,
                          const PipelineConfigInfo& configInfo)
     : lveDevice{device} {
-    createGraphicsPipeline(vertFilepath, fragFilepath, configInfo);
-  }
+  createGraphicsPipeline(vertFilepath, fragFilepath, configInfo);
+}
 
-  LvePipeline::~LvePipeline() {
-    vkDestroyShaderModule(lveDevice.device(), vertShaderModule, nullptr);
-    vkDestroyShaderModule(lveDevice.device(), fragShaderModule, nullptr);
-    vkDestroyPipeline(lveDevice.device(), graphicsPipeline, nullptr);
-  }
+LvePipeline::~LvePipeline() {
+  vkDestroyShaderModule(lveDevice.device(), vertShaderModule, nullptr);
+  vkDestroyShaderModule(lveDevice.device(), fragShaderModule, nullptr);
+  vkDestroyPipeline(lveDevice.device(), graphicsPipeline, nullptr);
+}
 
-  void LvePipeline::bind(VkCommandBuffer commandBuffer) {
-    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                      graphicsPipeline);
-  }
+void LvePipeline::bind(VkCommandBuffer commandBuffer) {
+  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    graphicsPipeline);
+}
 
 std::vector<char> LvePipeline::readFile(const std::string& filepath) {
-    std::ifstream file{filepath, std::ios::ate | std::ios::binary};
+  std::ifstream file{filepath, std::ios::ate | std::ios::binary};
 
   if (!file.is_open()) {
     throw std::runtime_error("failed to open file: " + filepath);
@@ -46,7 +48,6 @@ std::vector<char> LvePipeline::readFile(const std::string& filepath) {
 void LvePipeline::createGraphicsPipeline(const std::string& vertFilepath,
                                          const std::string& fragFilepath,
                                          const PipelineConfigInfo& configInfo) {
-
   assert(configInfo.pipelineLayout != VK_NULL_HANDLE &&
          "Cannot create graphics pipeline: no pipelineLayout provided in "
          "configInfo");
@@ -76,13 +77,17 @@ void LvePipeline::createGraphicsPipeline(const std::string& vertFilepath,
   shaderStages[1].pNext = nullptr;
   shaderStages[1].pSpecializationInfo = nullptr;
 
+  auto bindingDescriptions = LveModel::Vertex::getBindingDescriptions();
+  auto attributeDescriptions = LveModel::Vertex::getAttributeDescriptions();
   VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
   vertexInputInfo.sType =
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-  vertexInputInfo.vertexAttributeDescriptionCount = 0;
-  vertexInputInfo.vertexBindingDescriptionCount = 0;
-  vertexInputInfo.pVertexAttributeDescriptions = nullptr;
-  vertexInputInfo.pVertexBindingDescriptions = nullptr;
+  vertexInputInfo.vertexAttributeDescriptionCount =
+      static_cast<uint32_t>(attributeDescriptions.size());
+  vertexInputInfo.vertexBindingDescriptionCount =
+      static_cast<uint32_t>(bindingDescriptions.size());
+  vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+  vertexInputInfo.pVertexBindingDescriptions = bindingDescriptions.data();
 
   VkPipelineViewportStateCreateInfo viewportInfo{};
   viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -111,17 +116,11 @@ void LvePipeline::createGraphicsPipeline(const std::string& vertFilepath,
   pipelineInfo.basePipelineIndex = -1;
   pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-  if (vkCreateGraphicsPipelines(
-    lveDevice.device(),
-    VK_NULL_HANDLE,
-    1,
-    &pipelineInfo,
-    nullptr,
-    &graphicsPipeline)!= VK_SUCCESS){
+  if (vkCreateGraphicsPipelines(lveDevice.device(), VK_NULL_HANDLE, 1,
+                                &pipelineInfo, nullptr,
+                                &graphicsPipeline) != VK_SUCCESS) {
     throw std::runtime_error("failed to create graphics pipeline");
   }
-
-
 }
 
 void LvePipeline::createShaderModule(const std::vector<char>& code,
@@ -218,4 +217,4 @@ PipelineConfigInfo LvePipeline::defaultPipelineConfigInfo(uint32_t width,
 
   return configInfo;
 }
-  }
+}  // namespace lve
