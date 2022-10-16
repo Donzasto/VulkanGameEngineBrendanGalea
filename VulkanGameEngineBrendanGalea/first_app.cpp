@@ -28,7 +28,9 @@ void FirstApp::run() {
 
 void FirstApp::loadModels() {
   std::vector<LveModel::Vertex> vertices{
-      {{0.0f, -0.5f}}, {{0.5f, 0.5f}}, {{-0.5f, 0.5f}}};
+      {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+      {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+      {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}};
 
   lveModel = std::make_unique<LveModel>(lveDevice, vertices);
 }
@@ -53,8 +55,8 @@ void FirstApp::createPipeline() {
   pipelineConfig.renderPass = lveSwapChain.getRenderPass();
   pipelineConfig.pipelineLayout = pipelineLayout;
   lvePipeline =
-      std::make_unique<LvePipeline>(lveDevice, "simple_shader.vert.spv",
-                                    "simple_shader.frag.spv", pipelineConfig);
+      std::make_unique<LvePipeline>(lveDevice, "./shaders/simple_shader.vert.spv",
+                                    "./shaders/simple_shader.frag.spv", pipelineConfig);
 }
 void FirstApp::createCommandBuffers() {
   commandBuffers.resize(lveSwapChain.imageCount());
